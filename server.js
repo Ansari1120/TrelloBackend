@@ -17,7 +17,7 @@ app.use("/api/course", courseRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/projects", projectRouter);
 app.use("/api/tasks", taskRouter);
-app.use("/api/image",uploadRouter);
+app.use("/api/image", uploadRouter);
 
 app.get("/", (req, res) => {
   res.send("Server is Started....");

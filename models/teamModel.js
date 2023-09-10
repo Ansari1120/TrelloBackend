@@ -5,8 +5,8 @@ const TeamSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  Logo: {
-    Type: String,
+  Logo: { // Change "Type" to "type"
+    type: String, // Corrected data type
     required: true,
   },
   TeamMembers: [
@@ -16,6 +16,7 @@ const TeamSchema = new mongoose.Schema({
     },
   ],
 });
+
 const Team = mongoose.model("Team", TeamSchema);
 
 module.exports = Team;

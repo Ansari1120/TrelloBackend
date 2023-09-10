@@ -4,6 +4,8 @@ const courseRouter = require("./routes/courseRouter");
 const userRoutes = require("./routes/userRoutes");
 const projectRouter = require("./routes/projectRouter");
 const taskRouter = require("./routes/taskRouter");
+const uploadRouter = require("./routes/teamRoute");
+
 const cors = require("cors");
 require("dotenv").config();
 
@@ -15,6 +17,7 @@ app.use("/api/course", courseRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/projects", projectRouter);
 app.use("/api/tasks", taskRouter);
+app.use("/api/image",uploadRouter);
 
 app.get("/", (req, res) => {
   res.send("Server is Started....");

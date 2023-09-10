@@ -22,7 +22,7 @@ const Controller = {
       const imageStream = streamifier.createReadStream(req.file.buffer);
 
       // Upload the image to Cloudinary using a stream
-      const result = await cloudinary.uploader
+      await cloudinary.uploader
         .upload_stream({ resource_type: "auto" }, async (error, result) => {
           if (error) {
             console.error("Image upload error:", error);

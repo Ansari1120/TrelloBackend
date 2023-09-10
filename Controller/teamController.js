@@ -1,10 +1,13 @@
 const sendResponse = require("../Helper/Helper");
 const teamModel = require("../models/teamModel");
 const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier"); // Import the streamifier library
 
 const Controller = {
   getTeam: async (req, res) => {
-    return res.send(sendResponse(true, null, "route is working fine of teams")).status(200);
+    return res
+      .send(sendResponse(true, null, "route is working fine of teams"))
+      .status(200);
   },
   postTeam: async (req, res) => {},
   uploadImage: async (req, res) => {
@@ -15,22 +18,29 @@ const Controller = {
           .status(400);
       }
 
-      // Upload the image to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.buffer);
+      // Convert the multer file buffer to a readable stream
+      const imageStream = streamifier.createReadStream(req.file.buffer);
 
-      //   // Return the Cloudinary URL as a response
-      //   res.json({ imageUrl: result.secure_url });
-      res
-        .send(
-          sendResponse(
-            false,
-            result,
-            `Image Uploaded Successfully : ${res.json({
-              imageUrl: result.secure_url,
-            })}`
-          )
-        )
-        .status(200);
+      // Upload the image to Cloudinary using a stream
+      const result = await cloudinary.uploader
+        .upload_stream({ resource_type: "auto" }, async (error, result) => {
+          if (error) {
+            console.error("Image upload error:", error);
+            res.status(500).json({ error: "Image upload failed" });
+          } else {
+            // Return the Cloudinary URL as a response
+            res
+              .status(200)
+              .send(
+                sendResponse(
+                  false,
+                  result,
+                  `Image Uploaded Successfully: ${result.secure_url}`
+                )
+              );
+          }
+        })
+        .end(imageStream);
     } catch (error) {
       console.error("Image upload error:", error);
       res.status(500).json({ error: "Image upload failed" });

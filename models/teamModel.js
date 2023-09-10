@@ -5,8 +5,14 @@ const TeamSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  Logo: { // Change "Type" to "type"
+  Logo: {
+    // Change "Type" to "type"
     type: String, // Corrected data type
+    required: true,
+  },
+  CreatorUserID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
     required: true,
   },
   TeamMembers: [

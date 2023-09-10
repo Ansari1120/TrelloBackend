@@ -2,6 +2,7 @@ const sendResponse = require("../Helper/Helper");
 const teamModel = require("../models/teamModel");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier"); // Import the streamifier library
+const fs = require("fs").promises; // Import the 'fs' module to work with the file system
 
 const Controller = {
   getTeam: async (req, res) => {
@@ -18,10 +19,17 @@ const Controller = {
           .status(400);
       }
 
-      // Upload the image to Cloudinary using the buffer directly
-      const result = await cloudinary.uploader.upload(req.file.buffer, {
+      // Create a temporary file with a random name and write the buffer to it
+      const tempFilePath = `/tmp/${Math.random().toString(36).substring(2)}`;
+      await fs.writeFile(tempFilePath, req.file.buffer);
+
+      // Upload the temporary file to Cloudinary
+      const result = await cloudinary.uploader.upload(tempFilePath, {
         resource_type: "auto",
       });
+
+      // Delete the temporary file
+      await fs.unlink(tempFilePath);
 
       // Return the Cloudinary URL as a response
       res

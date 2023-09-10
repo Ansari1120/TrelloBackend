@@ -3,6 +3,7 @@ const route = express.Router();
 const Controller = require("../Controller/teamController");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+
 // Multer storage configuration (memory storage)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });

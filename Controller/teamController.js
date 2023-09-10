@@ -18,29 +18,21 @@ const Controller = {
           .status(400);
       }
 
-      // Convert the multer file buffer to a readable stream
-      const imageStream = streamifier.createReadStream(req.file.buffer);
+      // Upload the image to Cloudinary using the buffer directly
+      const result = await cloudinary.uploader.upload(req.file.buffer, {
+        resource_type: "auto",
+      });
 
-      // Upload the image to Cloudinary using a stream
-      await cloudinary.uploader
-        .upload_stream({ resource_type: "auto" }, async (error, result) => {
-          if (error) {
-            console.error("Image upload error:", error);
-            res.status(500).json({ error: "Image upload failed" });
-          } else {
-            // Return the Cloudinary URL as a response
-            res
-              .status(200)
-              .send(
-                sendResponse(
-                  false,
-                  result,
-                  `Image Uploaded Successfully: ${result.secure_url}`
-                )
-              );
-          }
-        })
-        .end(imageStream);
+      // Return the Cloudinary URL as a response
+      res
+        .status(200)
+        .send(
+          sendResponse(
+            false,
+            result,
+            `Image Uploaded Successfully: ${result.secure_url}`
+          )
+        );
     } catch (error) {
       console.error("Image upload error:", error);
       res.status(500).json({ error: "Image upload failed" });

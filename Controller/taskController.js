@@ -21,7 +21,11 @@ const Controller = {
 
       if (userId) {
         // Assuming userId is provided as a string in the request query
-        filter.CreatorUserID = userId;
+        // Use $or to match tasks with CreatorUserID or TeamMembers containing the userId
+        filter.$or = [
+          { CreatorUserID: userId},
+          { TeamMembers: userId },
+        ];
       }
 
       const result = await TaskModel.find(filter)
@@ -39,7 +43,7 @@ const Controller = {
       }
     } catch (e) {
       console.log(e);
-      res.send(sendResponse(false, null, "Server Internal Error")).status(500); // Changed status code to 500 for server error
+      res.send(sendResponse(false, null, "Server Internal Error")).status(500);
     }
   },
 

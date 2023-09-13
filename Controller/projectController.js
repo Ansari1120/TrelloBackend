@@ -15,7 +15,7 @@ const Controller = {
         // If userId is not provided, you can choose to return an empty result
         // or a different response as needed.
         res
-          .send(sendResponse(true,null, "No Data Found", "", page, limit))
+          .send(sendResponse(true, null, "No Data Found", "", page, limit))
           .status(200);
         return; // Exit the function
       }
@@ -45,15 +45,8 @@ const Controller = {
     }
   },
   postProject: async (req, res) => {
-    let {
-      name,
-      tasks,
-      category,
-      description,
-      startDate,
-      endDate,
-      creatorUserID,
-    } = req.body;
+    let { name, category, description, startDate, endDate, creatorUserID } =
+      req.body;
     try {
       let errArr = [];
 
@@ -77,9 +70,6 @@ const Controller = {
       if (!creatorUserID) {
         errArr.push("Required creatorUserID");
       }
-      if (!tasks) {
-        errArr.push("Required tasks");
-      }
       if (errArr.length > 0) {
         res
           .send(sendResponse(false, errArr, null, "Required All Fields"))
@@ -93,7 +83,6 @@ const Controller = {
           startDate,
           endDate,
           creatorUserID,
-          tasks,
         };
         let Project = new ProjectModel(obj);
         await Project.save();

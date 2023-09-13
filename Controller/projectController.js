@@ -100,15 +100,25 @@ const Controller = {
     }
   },
   SearchCourse: async (req, res) => {
-    let { searchKey, searchVal } = req.query;
+    let { searchKey, searchVal, userId } = req.query;
     try {
       searchVal = searchVal.toLowerCase();
-      let result = await ProjectModel.find({
-        [searchKey]: { $regex: new RegExp(searchVal, "i") },
-      }).populate({
-        path: "tasks", // Name of the field to populate
-        model: "Task", // The model to use for population
+      const filter = { [searchKey]: { $regex: new RegExp(searchVal, "i") } };
+
+      if (userId) {
+        filter.creatorUserID = userId;
+      } else {
+        res
+          .send(sendResponse(true, null, "No Data Found", "", 1, 40))
+          .status(200);
+        return;
+      }
+
+      const result = await ProjectModel.find(filter).populate({
+        path: "tasks",
+        model: "Task",
       });
+
       if (!result) {
         res.send(sendResponse(false, null, "No Data Found")).status(404);
       } else {

@@ -6,8 +6,7 @@ const TeamSchema = new mongoose.Schema({
     required: true,
   },
   Logo: {
-    // Change "Type" to "type"
-    type: String, // Corrected data type
+    type: String, 
     required: true,
   },
   CreatorUserID: {

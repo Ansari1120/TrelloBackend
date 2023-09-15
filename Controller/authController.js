@@ -3,6 +3,8 @@ const sendResponse = require("../Helper/Helper");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs").promises; // Import the 'fs' module to work with the file system
 
 const AuthController = {
   login: async (req, res) => {
@@ -14,7 +16,7 @@ const AuthController = {
       let isConfirm = await bcrypt.compare(obj.password, result.password);
       if (isConfirm) {
         let token = jwt.sign({ ...result }, process.env.SECURE_KEY, {
-          expiresIn: 10800,
+          expiresIn: 10800, //3 hours
         });
         return res.send(
           sendResponse(true, { user: result, token }, "Login Successfully")
@@ -30,7 +32,7 @@ const AuthController = {
   getUsers: async (req, res) => {
     try {
       const users = await userModel.find().select("-password");
-  
+
       if (users) {
         res.send(sendResponse(true, users));
       } else {
@@ -50,8 +52,8 @@ const AuthController = {
           res.send(sendResponse(false, null, "Unauthorized")).status(403);
         } else {
           // Include user information in the response
-          const { _id, userName, email } = decode; // You may need to adjust the property names
-          const userInfo = { _id, userName, email };
+          const { _id, userName, email } = decode;
+          // const userInfo = { _id, userName, email };
           res
             .send(
               sendResponse(
@@ -69,7 +71,6 @@ const AuthController = {
       res.send(sendResponse(false, null, "Server internal Error")).status(400);
     }
   },
-
   adminProtected: async (req, res, next) => {
     let token = req.headers.authorization;
     token = token.split(" ")[1];
@@ -87,6 +88,39 @@ const AuthController = {
       }
     });
   },
+  editProfile: async (req, res) => {
+    try {
+      let id = req.params.id;
+      let { userName, avatar, email } = req.body;
+      let result = await userModel.findById(id);
+      if (!result) {
+        return res
+          .status(404)
+          .send(sendResponse(false, null, "User not found with the given params id"));
+      } else {
+        if (!avatar || avatar === "") {
+          avatar = "https://extendedevolutionarysynthesis.com/wp-content/uploads/2018/02/avatar-1577909_960_720.png";
+        }
+        let updateProfile = await userModel.findByIdAndUpdate(
+          id,
+          { userName, avatar, email },
+          { new: true }
+        );
+        if (!updateProfile) {
+          return res
+            .status(404)
+            .send(sendResponse(false, null, "Something went wrong while updating user credentials"));
+        } else {
+          return res
+            .status(200)
+            .send(sendResponse(true, updateProfile, "Credentials Updated Successfully!"));
+        }
+      }
+    } catch (error) {
+      return res.status(500).send(sendResponse(false, null, "Internal Server Error"));
+    }
+  },
+  
   changePassword: async (req, res) => {
     try {
       const { email, newPassword, oldPassword } = req.body;
@@ -139,7 +173,44 @@ const AuthController = {
           .send(sendResponse(false, null, "No Data Found on this id"))
           .status(404);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  uploadImage: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .send(sendResponse(false, null, "No Image Selected to Upload"))
+          .status(400);
+      }
+
+      // Create a temporary file with a random name and write the buffer to it
+      const tempFilePath = `/tmp/${Math.random().toString(36).substring(2)}`;
+      await fs.writeFile(tempFilePath, req.file.buffer);
+
+      // Upload the temporary file to Cloudinary
+      const result = await cloudinary.uploader.upload(tempFilePath, {
+        resource_type: "auto",
+      });
+
+      // Delete the temporary file
+      await fs.unlink(tempFilePath);
+
+      // Return the Cloudinary URL as a response
+      res
+        .status(200)
+        .send(
+          sendResponse(
+            false,
+            result,
+            `Image Uploaded Successfully: ${result.secure_url}`
+          )
+        );
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ error: "Image upload failed" });
+    }
   },
 };
 

@@ -17,7 +17,6 @@ cloudinary.config({
 
 route.get("/", Controller.getTeam);
 route.post("/", Controller.postTeam);
-
 route.post("/upload", upload.single("image"), Controller.uploadImage);
 
 module.exports = route;

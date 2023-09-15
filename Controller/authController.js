@@ -52,7 +52,7 @@ const AuthController = {
           res.send(sendResponse(false, null, "Unauthorized")).status(403);
         } else {
           // Include user information in the response
-          const { _id, userName, email } = decode;
+          const { _id, userName, email,avatar } = decode;
           // const userInfo = { _id, userName, email };
           res
             .send(

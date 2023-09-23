@@ -3,6 +3,8 @@ const sendResponse = require("../Helper/Helper");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../Helper/sendEmail");
+const generateRandomToken = require("../Helper/randomToken");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs").promises; // Import the 'fs' module to work with the file system
 
@@ -52,7 +54,7 @@ const AuthController = {
           res.send(sendResponse(false, null, "Unauthorized")).status(403);
         } else {
           // Include user information in the response
-          const { _id, userName, email,avatar } = decode;
+          const { _id, userName, email, avatar } = decode;
           // const userInfo = { _id, userName, email };
           res
             .send(
@@ -96,10 +98,13 @@ const AuthController = {
       if (!result) {
         return res
           .status(404)
-          .send(sendResponse(false, null, "User not found with the given params id"));
+          .send(
+            sendResponse(false, null, "User not found with the given params id")
+          );
       } else {
         if (!avatar || avatar === "") {
-          avatar = "https://extendedevolutionarysynthesis.com/wp-content/uploads/2018/02/avatar-1577909_960_720.png";
+          avatar =
+            "https://extendedevolutionarysynthesis.com/wp-content/uploads/2018/02/avatar-1577909_960_720.png";
         }
         let updateProfile = await userModel.findByIdAndUpdate(
           id,
@@ -109,18 +114,32 @@ const AuthController = {
         if (!updateProfile) {
           return res
             .status(404)
-            .send(sendResponse(false, null, "Something went wrong while updating user credentials"));
+            .send(
+              sendResponse(
+                false,
+                null,
+                "Something went wrong while updating user credentials"
+              )
+            );
         } else {
           return res
             .status(200)
-            .send(sendResponse(true, updateProfile, "Credentials Updated Successfully!"));
+            .send(
+              sendResponse(
+                true,
+                updateProfile,
+                "Credentials Updated Successfully!"
+              )
+            );
         }
       }
     } catch (error) {
-      return res.status(500).send(sendResponse(false, null, "Internal Server Error"));
+      return res
+        .status(500)
+        .send(sendResponse(false, null, "Internal Server Error"));
     }
   },
-  
+
   changePassword: async (req, res) => {
     try {
       const { email, newPassword, oldPassword } = req.body;
@@ -210,6 +229,101 @@ const AuthController = {
     } catch (error) {
       console.error("Image upload error:", error);
       res.status(500).json({ error: "Image upload failed" });
+    }
+  },
+  forgotPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+      const userExist = await userModel.findOne({ email });
+      if (!userExist) {
+        return res
+          .send(
+            sendResponse(
+              false,
+              null,
+              "user with the provided email does not exist"
+            )
+          )
+          .status(404);
+      } else {
+        const token = generateRandomToken(5);
+        console.log(token);
+        userExist.resettoken = token;
+        userExist.resettokenExpiration = Date.now() + 3600000;
+        await userExist.save();
+        await sendEmail(
+          email,
+          "A Token send for Resetting Passowrd for Trello App",
+          `Here is Your Reset Token ${token}`
+        );
+        res
+          .send(
+            sendResponse(
+              true,
+              userExist,
+              `A Confirmation Email send to ${email} with a Token to Reset Password`
+            )
+          )
+          .status(200);
+      }
+    } catch (error) {
+      res.send(sendResponse(false, null, "Internal Server Error")).status(400);
+    }
+  },
+  resetPassword: async (req, res) => {
+    try {
+      const { token, email, newPassword } = req.body;
+
+      const userExist = await userModel.findOne({ email });
+      if (!userExist) {
+        return res
+          .send(
+            sendResponse(
+              false,
+              null,
+              "user with the provided email does not exist"
+            )
+          )
+          .status(404);
+      } else {
+        if (userExist.resettoken !== token) {
+          return res
+            .send(sendResponse(false, null, "Enter Valid Token"))
+            .status(404);
+        }
+        if (userExist.resettokenExpiration < new Date()) {
+          return res
+            .send(sendResponse(false, null, "Token has Expired"))
+            .status(404);
+        }
+        if (userExist.password === newPassword) {
+          return res
+            .send(
+              sendResponse(
+                false,
+                null,
+                "This Password is Already Taken Try resending token email with different password"
+              )
+            )
+            .status(404);
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        userExist.password = hashedPassword;
+        userExist.resettoken = "";
+        userExist.resettokenExpiration = null;
+        await userExist.save();
+        res
+          .send(
+            sendResponse(
+              true,
+              userExist,
+              "Congratulations Password Reset Completed"
+            )
+          )
+          .status(200);
+      }
+    } catch (error) {
+      res.send(sendResponse(false, null, "Internal Server Error")).status(400);
     }
   },
 };

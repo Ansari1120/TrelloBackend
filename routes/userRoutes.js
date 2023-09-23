@@ -6,6 +6,8 @@ const bcrypt = require("bcryptjs");
 const AuthController = require("../Controller/authController");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+var dotenv = require("dotenv");
+dotenv.config();
 
 // Multer storage configuration (memory storage)
 const storage = multer.memoryStorage();
@@ -13,9 +15,9 @@ const upload = multer({ storage });
 
 // Cloudinary configuration
 cloudinary.config({
-  cloud_name: "dh0qyygrv",
-  api_key: "733256674134826",
-  api_secret: "Pk-JvJt0VmtKjucERG5Feah1wos",
+  cloud_name: process.env.CLOUDNAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 route.post("/signup", async (req, res) => {
@@ -63,6 +65,8 @@ route.post("/login", AuthController.login);
 route.post("/");
 route.post("/upload", upload.single("image"), AuthController.uploadImage);
 route.post("/changePassword", AuthController.changePassword);
+route.post("/forgotPassword", AuthController.forgotPassword);
+route.post("/resetPassword", AuthController.resetPassword);
 route.post("/deleteUser/:id", AuthController.deleteUser);
 route.put("/:id", AuthController.editProfile);
 // route.delete("/");

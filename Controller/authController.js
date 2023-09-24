@@ -246,17 +246,6 @@ const AuthController = {
           )
           .status(404);
       } else {
-        if (userExist.email !== email) {
-          return res
-            .send(
-              sendResponse(
-                false,
-                null,
-                "Please Provide Exact email from which user's password you want to reset !"
-              )
-            )
-            .status(404);
-        }
         const token = generateRandomToken(5);
         console.log(token);
         userExist.resettoken = token;

@@ -253,7 +253,7 @@ const AuthController = {
         await userExist.save();
         await sendEmail(
           email,
-          "A Token send for Resetting Passowrd for Trello App",
+          "A Token send for Resetting Password for Trello App",
           `Here is Your Reset Token ${token}`
         );
         res
